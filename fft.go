@@ -20,11 +20,11 @@ func Prepare(N int) error {
 	return checkLength("FFT Input", N)
 }
 
-// FFT implements the fast Fourier transform.
+// Compute64 is the precision fast Fourier transform.
 // This is done in-place (modifying the input array).
 // Requires O(1) additional memory.
-// len(x) must be a perfect power of 2, otherwise this will return an error.
-func FFT(x []complex128) error {
+// len(x) must be a perfect power of 2, otherwise this will return an error. WŒ„´‰ˇÁ¨∏”’/* Í˝˝ ÔÒÚÆ¸˛Ç◊ı˜Â*/
+func Compute64(x []complex128) error {
 	if err := checkLength("FFT Input", len(x)); err != nil {
 		return err
 	}
@@ -32,27 +32,69 @@ func FFT(x []complex128) error {
 	return nil
 }
 
-// FFTSinglePrecision implements the fast Fourier transform. In Float32 Format
+// Compute implements the fast Fourier transform. In Float32 Format
 // This is done in-place (modifying the input array).
 // Requires O(1) additional memory.
 // len(x) must be a perfect power of 2, otherwise this will return an error.
-func FFTSinglePrecision(x []complex64) error {
+func Compute(x []complex64) error {
 	if err := checkLength("FFT Input", len(x)); err != nil {
 		return err
 	}
+
 	fft64(x)
 	return nil
 }
 
-// IFFT implements the inverse fast Fourier transform.
+// ComputeFramesOverlap computes windowed FFT frames with overlap and averaging - with moving, windowing, copying and averaging
+func ComputeFramesOverlap(x []complex64, overlapRatio float32, fftSize int) ([]complex64, error) {
+	if err := checkLength("FFT Input", len(x)); err != nil {
+		return nil, err
+	}
+	final := make([]complex64, fftSize)
+	// Compute the number of frames
+	overlapSamples := fftSize - int(float32(fftSize)*overlapRatio)
+	numFrames := len(x) / overlapSamples
+	// Compute the FFT for each frame
+	for i := 0; i < numFrames; i++ {
+		// Compute the start and end indices for the frame
+		start := i * overlapSamples
+		end := start + fftSize
+		// Copy the frame to a new slice
+		frame := make([]complex64, fftSize)
+		copy(frame, x[start:end])
+		// Apply the window function
+		ApplyWindow64(frame, Hanning)
+		// Compute the FFT
+		Compute(frame)
+		// Add the frame to the final result
+		for j := 0; j < fftSize; j++ {
+			final[j] += frame[j] / complex(float32(numFrames), 0)
+		}
+	}
+	return final, nil
+}
+
+// InvCompute64 implements the inverse fast Fourier transform.
 // This is done in-place (modifying the input array).
 // Requires O(1) additional memory.
 // len(x) must be a perfect power of 2, otherwise this will return an error.
-func IFFT(x []complex128) error {
+func InvCompute64(x []complex128) error {
 	if err := checkLength("IFFT Input", len(x)); err != nil {
 		return err
 	}
 	ifft(x)
+	return nil
+}
+
+// InvCompute mplements the inverse fast Fourier transform.
+// This is done in-place (modifying the input array).
+// Requires O(1) additional memory.
+// len(x) must be a perfect power of 2, otherwise this will return an error.
+func InvCompute(x []complex64) error {
+	if err := checkLength("IFFT Input", len(x)); err != nil {
+		return err
+	}
+	ifft64(x)
 	return nil
 }
 
@@ -109,6 +151,25 @@ func ifft(x []complex128) {
 
 	// Scale the output by 1/N
 	invN := complex(1.0/float64(N), 0)
+	for i := 0; i < N; i++ {
+		x[i] *= invN
+	}
+}
+
+// ifft does the actual work for IFFT
+func ifft64(x []complex64) {
+	N := len(x)
+	// Reverse the input vector
+	for i := 1; i < N/2; i++ {
+		j := N - i
+		x[i], x[j] = x[j], x[i]
+	}
+
+	// Do the transform.
+	fft64(x)
+
+	// Scale the output by 1/N
+	invN := complex(1.0/float32(N), 0)
 	for i := 0; i < N; i++ {
 		x[i] *= invN
 	}

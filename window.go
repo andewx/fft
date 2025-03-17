@@ -78,7 +78,7 @@ func PowerSpectrum(x []complex64) []float32 {
 	result := make([]float32, n)
 
 	for i := 0; i < n; i++ {
-		result[i] = real(x[i])*real(x[i]) + imag(x[i])*imag(x[i])
+		result[i] = (real(x[i])*real(x[i]) + imag(x[i])*imag(x[i])) / float32(n)
 	}
 
 	return result

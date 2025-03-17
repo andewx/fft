@@ -64,14 +64,14 @@ func TestPrepare(t *testing.T) {
 
 func TestFFT(t *testing.T) {
 	// Test FFT of non-powers of 2 returns InputSizeError
-	checkIsInputSizeError(t, "FFT(complexRand(17))", FFT(complexRand(17)))
+	checkIsInputSizeError(t, "FFT(complexRand(17))", Compute64(complexRand(17)))
 	// Test FFT(x) == slowFFT(x) for power of 2 up to 2^10
 	for N := 2; N < (1 << 11); N <<= 1 {
 		x := complexRand(N)
 
 		y1 := slowFFT(copyVector(x))
 		y2 := copyVector(x)
-		err := FFT(y2)
+		err := Compute64(y2)
 		if err != nil {
 			t.Errorf("FFT error: %v", err)
 		}
@@ -85,16 +85,16 @@ func TestFFT(t *testing.T) {
 
 func TestIFFT(t *testing.T) {
 	// Test IFFT of non-powers of 2 returns InputSizeError
-	checkIsInputSizeError(t, "IFFT(complexRand(17))", IFFT(complexRand(17)))
+	checkIsInputSizeError(t, "IFFT(complexRand(17))", InvCompute64(complexRand(17)))
 	// Test FFT(IFFT(x)) == x for power of 2 up to 2^10
 	for N := 2; N < (1 << 11); N <<= 1 {
 		x := complexRand(N)
 		y := copyVector(x)
-		err := FFT(y)
+		err := Compute64(y)
 		if err != nil {
 			t.Errorf("FFT error: %v", err)
 		}
-		err = IFFT(y)
+		err = InvCompute64(y)
 		if err != nil {
 			t.Errorf("IFFT error: %v", err)
 		}
@@ -229,7 +229,7 @@ func BenchmarkFFT(b *testing.B) {
 			b.SetBytes(int64(bm.size * 16))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				FFT(x)
+				Compute64(x)
 			}
 		})
 	}
@@ -248,7 +248,7 @@ func BenchmarkFFTParallel(b *testing.B) {
 				i := int(atomic.AddUint64(&idx, 1) - 1)
 				y := x[i*bm.size : (i+1)*bm.size]
 				for pb.Next() {
-					FFT(y)
+					Compute64(y)
 				}
 			})
 		})
@@ -263,7 +263,7 @@ func BenchmarkIFFT(b *testing.B) {
 			b.SetBytes(int64(bm.size * 16))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				IFFT(x)
+				InvCompute64(x)
 			}
 		})
 	}
@@ -282,7 +282,7 @@ func BenchmarkIFFTParallel(b *testing.B) {
 				i := int(atomic.AddUint64(&idx, 1) - 1)
 				y := x[i*bm.size : (i+1)*bm.size]
 				for pb.Next() {
-					IFFT(y)
+					InvCompute64(y)
 				}
 			})
 		})
