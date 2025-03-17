@@ -53,7 +53,7 @@ func ComputeFramesOverlap(x []complex64, overlapRatio float32, fftSize int) ([]c
 	final := make([]complex64, fftSize)
 	// Compute the number of frames
 	overlapSamples := fftSize - int(float32(fftSize)*overlapRatio)
-	numFrames := len(x) / overlapSamples
+	numFrames := (len(x) / overlapSamples) - (fftSize / overlapSamples)
 	// Compute the FFT for each frame
 	for i := 0; i < numFrames; i++ {
 		// Compute the start and end indices for the frame
