@@ -71,6 +71,12 @@ func ComputeFramesOverlap(x []complex64, overlapRatio float32, fftSize int) ([]c
 			final[j] += frame[j] / complex(float32(numFrames), 0)
 		}
 	}
+
+	// Normalize Power Spectrum of the final result
+	for i := 0; i < fftSize; i++ {
+		final[i] /= (final[i] * final[i]) / complex(float32(fftSize*fftSize), 0)
+		final[i] = complex64(10 * cmplx.Log10(complex128(final[i])))
+	}
 	return final, nil
 }
 
