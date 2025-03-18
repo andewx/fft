@@ -66,15 +66,15 @@ func ComputeFramesOverlap(x []complex64, overlapRatio float32, fftSize int) ([]c
 		ApplyWindow64(frame, Hanning)
 		// Compute the FFT
 		Compute(frame)
-		// Add the frame to the final result
+		// Final FFT is Average of all frames
 		for j := 0; j < fftSize; j++ {
-			final[j] += frame[j] / complex(float32(numFrames), 0)
+			final[j] += complex(real(frame[j])/float32(numFrames), imag(frame[j])/float32(numFrames))
 		}
 	}
 
 	// Normalize Power Spectrum of the final result
 	for i := 0; i < fftSize; i++ {
-		final[i] /= (final[i] * final[i]) / complex(float32(fftSize*fftSize), 0)
+		final[i] = complex(real(final[i])/float32(fftSize), imag(final[i])/float32(fftSize))
 		final[i] = complex64(10 * cmplx.Log10(complex128(final[i])))
 	}
 	return final, nil
